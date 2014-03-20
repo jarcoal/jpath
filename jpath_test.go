@@ -50,7 +50,7 @@ func init() {
 	}
 }
 
-func TestBicycleColor(t *testing.T) {
+func TestChildSelector(t *testing.T) {
 	results := jpath("$.store.bicycle.color", document)
 
 	if len(results) != 1 {
@@ -67,17 +67,36 @@ func TestBicycleColor(t *testing.T) {
 	}
 }
 
-func TestPrices(t *testing.T) {
-	results := jpath("$..price", document)
+func TestDescendentSelector(t *testing.T) {
+	// all prices
+	{
+		results := jpath("$..price", document)
 
-	if len(results) != 5 {
-		t.Fatalf("expected 5 results, got %v", len(results))
+		if len(results) != 5 {
+			t.Fatalf("expected 5 results, got %v", len(results))
+		}
+
+		for _, result := range results {
+			_, ok := result.(float64)
+			if !ok {
+				t.Fatal("expected float64, got %T", result)
+			}
+		}
 	}
 
-	for _, result := range results {
-		_, ok := result.(float64)
-		if !ok {
-			t.Fatal("expected float64, got %T", result)
+	// just book prices
+	{
+		results := jpath("$..book..price", document)
+
+		if len(results) != 4 {
+			t.Fatalf("expected 4 results, got %v", len(results))
+		}
+
+		for _, result := range results {
+			_, ok := result.(float64)
+			if !ok {
+				t.Fatal("expected float64, got %T", result)
+			}
 		}
 	}
 }
