@@ -63,7 +63,7 @@ func TestChildSelector(t *testing.T) {
 	}
 
 	if color != "red" {
-		t.Fatal("expected value to be red, got %s", color)
+		t.Fatal("expected value to be 'red', got %s", color)
 	}
 }
 
@@ -98,5 +98,22 @@ func TestDescendentSelector(t *testing.T) {
 				t.Fatal("expected float64, got %T", result)
 			}
 		}
+	}
+}
+
+func TestAttributeSelector(t *testing.T) {
+	results := jpath("$.store.book[0].title", document)
+
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %v", len(results))
+	}
+
+	title, ok := results[0].(string)
+	if !ok {
+		t.Fatalf("expected string, got %T", title)
+	}
+
+	if title != "Sayings of the Century" {
+		t.Fatalf("expected value to be 'Sayings of the Century', got %s", title)
 	}
 }

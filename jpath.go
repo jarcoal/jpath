@@ -92,21 +92,28 @@ func childFilter(f string, v interface{}) []interface{} {
 
 //
 func idxFilter(f string, v interface{}) []interface{} {
+	// shave off the brackets
+	f = f[1 : len(f)-1]
+
+	// make sure this is a slice
 	slice, ok := v.([]interface{})
 	if !ok {
 		return make([]interface{}, 0)
 	}
 
+	// make sure the index is numeric
 	i, err := strconv.Atoi(f)
 	if err != nil {
 		return make([]interface{}, 0)
 	}
 
+	// make sure it's not out of bounds
 	if len(slice) <= i {
 		return make([]interface{}, 0)
 	}
 
-	return slice[i:i]
+	// grab the entry from the slice
+	return slice[i : i+1]
 }
 
 //
