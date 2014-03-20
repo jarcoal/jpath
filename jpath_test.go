@@ -117,3 +117,22 @@ func TestAttributeSelector(t *testing.T) {
 		t.Fatalf("expected value to be 'Sayings of the Century', got %s", title)
 	}
 }
+
+func TestUnmarshal(t *testing.T) {
+	st := new(struct {
+		Color  string    `jpath:"$.store.bicycle.color"`
+		Prices []float64 `jpath:"$..price"`
+	})
+
+	if err := Unmarshal(documentBytes, st); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if st.Color != "red" {
+		t.Fatalf("expected Color to be '%s', got '%s'", st.Color)
+	}
+
+	if len(st.Prices) != 5 {
+		t.Fatalf("expected Prices to have 5 entries, got %v", len(st.Prices))
+	}
+}

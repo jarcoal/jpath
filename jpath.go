@@ -3,6 +3,7 @@ package jpath
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,6 +14,8 @@ import (
 // [sub]
 // [union,union]
 // [start:end:step]
+
+var TagIdentifier = "jpath"
 
 type filter func(f string, v interface{}) []interface{}
 
@@ -152,4 +155,51 @@ func descendingAttributeFilter(f string, v interface{}) []interface{} {
 	}
 
 	return ret
+}
+
+func Unmarshal(data []byte, v interface{}) error {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(data, &m); err != nil {
+		return err
+	}
+	return unmarshal(data, v, m)
+}
+
+func unmarshal(data []byte, v interface{}, m map[string]interface{}) error {
+	vt := reflect.TypeOf(v).Elem()
+	vv := reflect.ValueOf(v).Elem()
+
+	for i := 0; i < vt.NumField(); i++ {
+		ft := vt.Field(i)
+		fv := vv.Field(i)
+
+		// if we can't update this field, we're done with it
+		if !fv.CanSet() {
+			continue
+		}
+
+		tag := ft.Tag.Get(TagIdentifier)
+		if tag == "" {
+			continue
+		}
+		tagPieces := strings.Split(tag, " ")
+		query := tagPieces[0]
+
+		queryVal := Query(query, m)
+
+		if fv.Kind() == reflect.Slice {
+			sl := reflect.MakeSlice(ft.Type, 0, 0)
+
+			for _, i := range queryVal {
+				sl = reflect.Append(sl, reflect.ValueOf(i))
+			}
+
+			fv.Set(sl)
+		} else {
+			fv.Set(reflect.ValueOf(queryVal[0]))
+		}
+
+	}
+
+	return nil
 }
