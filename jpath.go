@@ -1,0 +1,143 @@
+package jpath
+
+import (
+	"encoding/json"
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+)
+
+// .something
+// ..something
+// [sub]
+// [union,union]
+// [start:end:step]
+
+type filter func(f string, v interface{}) []interface{}
+
+var filterMapping = map[string]filter{
+	"(\\.{2}\\w+)": descendentFilter,
+	"(\\.\\w+)":    childFilter,
+	"(\\[.+\\])":   idxFilter,
+}
+
+var matcher *regexp.Regexp
+var filters []filter
+
+func init() {
+	matchers := make([]string, 0)
+
+	for regex, filter := range filterMapping {
+		matchers = append(matchers, regex)
+		filters = append(filters, filter)
+	}
+	matcher = regexp.MustCompile(strings.Join(matchers, "|"))
+}
+
+func dumpJson(l string, o interface{}) {
+	data, _ := json.MarshalIndent(o, "", "	")
+	fmt.Printf("%s: %s\n", l, data)
+}
+
+func filterForSegmentResults(segmentResults []string) (filter, string) {
+	for i, segmentResult := range segmentResults {
+		if segmentResult == "" {
+			continue
+		}
+		return filters[i], segmentResult
+	}
+	return nil, ""
+}
+
+func jpath(sel string, obj map[string]interface{}) []interface{} {
+	segments := matcher.FindAllStringSubmatch(sel, -1)
+
+	// make the initial nest for the objects to scan
+	objs := []interface{}{obj}
+
+	// loop through all segments in the path
+	for _, segmentResults := range segments {
+		f, s := filterForSegmentResults(segmentResults[1:])
+
+		// make a place to store the results of the filter
+		tempObjs := make([]interface{}, 0)
+
+		// loop through
+		for _, o := range objs {
+			tempObjs = append(tempObjs, f(s, o)...)
+		}
+		objs = tempObjs
+	}
+
+	return objs
+}
+
+//
+func childFilter(f string, v interface{}) []interface{} {
+	f = f[1:]
+
+	msi, ok := v.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	attr, ok := msi[f]
+	if !ok {
+		return nil
+	}
+
+	return []interface{}{attr}
+}
+
+//
+func idxFilter(f string, v interface{}) []interface{} {
+	slice, ok := v.([]interface{})
+	if !ok {
+		return make([]interface{}, 0)
+	}
+
+	i, err := strconv.Atoi(f)
+	if err != nil {
+		return make([]interface{}, 0)
+	}
+
+	if len(slice) <= i {
+		return make([]interface{}, 0)
+	}
+
+	return slice[i:i]
+}
+
+//
+func descendentFilter(f string, v interface{}) []interface{} {
+	ret := make([]interface{}, 0)
+
+	switch o := v.(type) {
+	// if this is a map, then we need to see if one of it's
+	// attributes matches our selector.  even if none do,
+	// we need to proceed by descending deeper into the object
+	// for a match.
+	case map[string]interface{}:
+		// check to see if a child matches the selector, if it
+		// does then we just return right now.
+		if c, ok := o[f[2:]]; ok {
+			return append(ret, c)
+		}
+
+		// recursively keep checking for a match
+		for _, val := range o {
+			ret = append(ret, descendentFilter(f, val)...)
+		}
+
+	// if this a slice, then we need to check each member
+	// to see if it matches our selector
+	case []interface{}:
+		// recursively keep checking for a match
+		for _, val := range o {
+			ret = append(ret, descendentFilter(f, val)...)
+		}
+	}
+
+	return ret
+}
