@@ -17,8 +17,8 @@ import (
 type filter func(f string, v interface{}) []interface{}
 
 var filterMapping = map[string]filter{
-	"(\\.{2}\\w+)": descendentFilter,
-	"(\\.\\w+)":    childFilter,
+	"(\\.{2}\\w+)": descendingAttributeFilter,
+	"(\\.\\w+)":    attributeFilter,
 	"(\\[.+\\])":   idxFilter,
 }
 
@@ -74,13 +74,13 @@ func Query(sel string, obj map[string]interface{}) []interface{} {
 }
 
 //
-func childFilter(f string, v interface{}) []interface{} {
+func attributeFilter(f string, v interface{}) []interface{} {
 	ret := make([]interface{}, 0)
 
 	// shave off the prepended period
 	f = f[1:]
 
-	// child filter only works on maps
+	// attribute filter only works on maps
 	msi, ok := v.(map[string]interface{})
 	if !ok {
 		return ret
@@ -122,7 +122,7 @@ func idxFilter(f string, v interface{}) []interface{} {
 }
 
 //
-func descendentFilter(f string, v interface{}) []interface{} {
+func descendingAttributeFilter(f string, v interface{}) []interface{} {
 	ret := make([]interface{}, 0)
 
 	switch o := v.(type) {
@@ -131,7 +131,7 @@ func descendentFilter(f string, v interface{}) []interface{} {
 	// we need to proceed by descending deeper into the object
 	// for a match.
 	case map[string]interface{}:
-		// check to see if a child matches the selector, if it
+		// check to see if a attribute matches the selector, if it
 		// does then we just return right now.
 		if c, ok := o[f[2:]]; ok {
 			return append(ret, c)
@@ -139,7 +139,7 @@ func descendentFilter(f string, v interface{}) []interface{} {
 
 		// recursively keep checking for a match
 		for _, val := range o {
-			ret = append(ret, descendentFilter(f, val)...)
+			ret = append(ret, descendingAttributeFilter(f, val)...)
 		}
 
 	// if this a slice, then we need to check each member
@@ -147,7 +147,7 @@ func descendentFilter(f string, v interface{}) []interface{} {
 	case []interface{}:
 		// recursively keep checking for a match
 		for _, val := range o {
-			ret = append(ret, descendentFilter(f, val)...)
+			ret = append(ret, descendingAttributeFilter(f, val)...)
 		}
 	}
 
