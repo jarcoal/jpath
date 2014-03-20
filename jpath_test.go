@@ -51,7 +51,7 @@ func init() {
 }
 
 func TestChildSelector(t *testing.T) {
-	results := jpath("$.store.bicycle.color", document)
+	results := Query("$.store.bicycle.color", document)
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 result, got %v", len(results))
@@ -70,7 +70,7 @@ func TestChildSelector(t *testing.T) {
 func TestDescendentSelector(t *testing.T) {
 	// all prices
 	{
-		results := jpath("$..price", document)
+		results := Query("$..price", document)
 
 		if len(results) != 5 {
 			t.Fatalf("expected 5 results, got %v", len(results))
@@ -86,7 +86,7 @@ func TestDescendentSelector(t *testing.T) {
 
 	// just book prices
 	{
-		results := jpath("$..book..price", document)
+		results := Query("$..book..price", document)
 
 		if len(results) != 4 {
 			t.Fatalf("expected 4 results, got %v", len(results))
@@ -102,7 +102,7 @@ func TestDescendentSelector(t *testing.T) {
 }
 
 func TestAttributeSelector(t *testing.T) {
-	results := jpath("$.store.book[0].title", document)
+	results := Query("$.store.book[0].title", document)
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 result, got %v", len(results))

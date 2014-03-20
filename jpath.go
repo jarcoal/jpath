@@ -50,7 +50,7 @@ func filterForSegmentResults(segmentResults []string) (filter, string) {
 	return nil, ""
 }
 
-func jpath(sel string, obj map[string]interface{}) []interface{} {
+func Query(sel string, obj map[string]interface{}) []interface{} {
 	segments := matcher.FindAllStringSubmatch(sel, -1)
 
 	// make the initial nest for the objects to scan
@@ -75,19 +75,24 @@ func jpath(sel string, obj map[string]interface{}) []interface{} {
 
 //
 func childFilter(f string, v interface{}) []interface{} {
+	ret := make([]interface{}, 0)
+
+	// shave off the prepended period
 	f = f[1:]
 
+	// child filter only works on maps
 	msi, ok := v.(map[string]interface{})
 	if !ok {
-		return nil
+		return ret
 	}
 
+	// grab the value at the other end of the attribute if it's available
 	attr, ok := msi[f]
 	if !ok {
-		return nil
+		return ret
 	}
 
-	return []interface{}{attr}
+	return append(ret, attr)
 }
 
 //
