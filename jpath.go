@@ -9,40 +9,33 @@ import (
 	"strings"
 )
 
-// .something
-// ..something
-// [sub]
-// [union,union]
-// [start:end:step]
-
+// TagIdentifier determines the namespace of the tags accepted for the Unmarshaler.
 var TagIdentifier = "jpath"
 
 type filter func(f string, v interface{}) []interface{}
 
 var filterMapping = map[string]filter{
-	"(\\.{2}\\w+)": descendingAttributeFilter,
-	"(\\.\\w+)":    attributeFilter,
-	"(\\[.+\\])":   idxFilter,
+	"\\.{2}\\w+": descendingAttributeFilter,
+	"\\.\\w+":    attributeFilter,
+	"\\[.+\\]":   idxFilter,
 }
 
 var matcher *regexp.Regexp
 var filters []filter
 
+// build the complete regex from all of the registered filters
 func init() {
 	matchers := make([]string, 0)
 
 	for regex, filter := range filterMapping {
-		matchers = append(matchers, regex)
+		matchers = append(matchers, fmt.Sprintf("(%s)", regex))
 		filters = append(filters, filter)
 	}
 	matcher = regexp.MustCompile(strings.Join(matchers, "|"))
 }
 
-func dumpJson(l string, o interface{}) {
-	data, _ := json.MarshalIndent(o, "", "	")
-	fmt.Printf("%s: %s\n", l, data)
-}
-
+// filterForSegmentResults takes segment result pieces and finds the filter that handles
+// that segment type
 func filterForSegmentResults(segmentResults []string) (filter, string) {
 	for i, segmentResult := range segmentResults {
 		if segmentResult == "" {
@@ -69,6 +62,7 @@ type Jpath struct {
 	m map[string]interface{}
 }
 
+// Query takes a JSON path and returns a list of objects that matched.
 func (j *Jpath) Query(sel string) []interface{} {
 	segments := matcher.FindAllStringSubmatch(sel, -1)
 
@@ -92,6 +86,8 @@ func (j *Jpath) Query(sel string) []interface{} {
 	return objs
 }
 
+// Strings is a convenience method for returning a JSON path query as a slice of strings.
+// Skips results that matched the query, but are not strings.
 func (j *Jpath) Strings(sel string) []string {
 	ret := make([]string, 0)
 	for _, result := range j.Query(sel) {
@@ -113,6 +109,8 @@ func (j *Jpath) String(sel string) (string, bool) {
 	return "", false
 }
 
+// Bools is a convenience method for returning a JSON path query as a slice of bools.
+// Skips results that matched the query, but are not bools.
 func (j *Jpath) Bools(sel string) []bool {
 	ret := make([]bool, 0)
 	for _, result := range j.Query(sel) {
@@ -134,6 +132,8 @@ func (j *Jpath) Bool(sel string) (bool, bool) {
 	return false, false
 }
 
+// Floats is a convenience method for returning a JSON path query as a slice of floats.
+// Skips results that matched the query, but are not floats.
 func (j *Jpath) Floats(sel string) []float64 {
 	ret := make([]float64, 0)
 	for _, result := range j.Query(sel) {
@@ -236,6 +236,8 @@ func descendingAttributeFilter(f string, v interface{}) []interface{} {
 	return ret
 }
 
+// Unmarshal functions similarly to json.Unmarshal, except reads the jpath tag
+// and marshals results into struct fields based on the results of the queries.
 func Unmarshal(data []byte, v interface{}) error {
 	d, err := NewFromBytes(data)
 	if err != nil {
