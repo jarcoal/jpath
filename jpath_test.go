@@ -1,7 +1,6 @@
 package jpath
 
 import (
-	"encoding/json"
 	"testing"
 )
 
@@ -42,16 +41,17 @@ var documentBytes = []byte(`{
 	}
 }`)
 
-var document map[string]interface{}
+var document *Jpath
 
 func init() {
-	if err := json.Unmarshal(documentBytes, &document); err != nil {
+	var err error
+	if document, err = NewFromBytes(documentBytes); err != nil {
 		panic(err.Error())
 	}
 }
 
 func TestChildSelector(t *testing.T) {
-	results := Query("$.store.bicycle.color", document)
+	results := document.Query("$.store.bicycle.color")
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 result, got %v", len(results))
@@ -70,7 +70,7 @@ func TestChildSelector(t *testing.T) {
 func TestDescendentSelector(t *testing.T) {
 	// all prices
 	{
-		results := Query("$..price", document)
+		results := document.Query("$..price")
 
 		if len(results) != 5 {
 			t.Fatalf("expected 5 results, got %v", len(results))
@@ -86,7 +86,7 @@ func TestDescendentSelector(t *testing.T) {
 
 	// just book prices
 	{
-		results := Query("$..book..price", document)
+		results := document.Query("$..book..price")
 
 		if len(results) != 4 {
 			t.Fatalf("expected 4 results, got %v", len(results))
@@ -102,7 +102,7 @@ func TestDescendentSelector(t *testing.T) {
 }
 
 func TestAttributeSelector(t *testing.T) {
-	results := Query("$.store.book[0].title", document)
+	results := document.Query("$.store.book[0].title")
 
 	if len(results) != 1 {
 		t.Fatalf("expected 1 result, got %v", len(results))

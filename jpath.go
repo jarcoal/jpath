@@ -53,11 +53,27 @@ func filterForSegmentResults(segmentResults []string) (filter, string) {
 	return nil, ""
 }
 
-func Query(sel string, obj map[string]interface{}) []interface{} {
+func New(m map[string]interface{}) *Jpath {
+	return &Jpath{m}
+}
+
+func NewFromBytes(data []byte) (*Jpath, error) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	return New(m), nil
+}
+
+type Jpath struct {
+	m map[string]interface{}
+}
+
+func (j *Jpath) Query(sel string) []interface{} {
 	segments := matcher.FindAllStringSubmatch(sel, -1)
 
 	// make the initial nest for the objects to scan
-	objs := []interface{}{obj}
+	objs := []interface{}{j.m}
 
 	// loop through all segments in the path
 	for _, segmentResults := range segments {
@@ -158,14 +174,14 @@ func descendingAttributeFilter(f string, v interface{}) []interface{} {
 }
 
 func Unmarshal(data []byte, v interface{}) error {
-	m := make(map[string]interface{})
-	if err := json.Unmarshal(data, &m); err != nil {
+	d, err := NewFromBytes(data)
+	if err != nil {
 		return err
 	}
-	return unmarshal(data, v, m)
+	return unmarshal(d, v)
 }
 
-func unmarshal(data []byte, v interface{}, m map[string]interface{}) error {
+func unmarshal(d *Jpath, v interface{}) error {
 	vt := reflect.TypeOf(v).Elem()
 	vv := reflect.ValueOf(v).Elem()
 
@@ -185,7 +201,7 @@ func unmarshal(data []byte, v interface{}, m map[string]interface{}) error {
 		tagPieces := strings.Split(tag, " ")
 		query := tagPieces[0]
 
-		queryVal := Query(query, m)
+		queryVal := d.Query(query)
 
 		if fv.Kind() == reflect.Slice {
 			sl := reflect.MakeSlice(ft.Type, 0, 0)
