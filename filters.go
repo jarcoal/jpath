@@ -103,7 +103,7 @@ func idxFilter(f string, v interface{}) []interface{} {
 	}
 
 	// check if this a slice access
-	if sl := strings.Split(f, ":"); len(sl) > 0 {
+	if sl := strings.Split(f, ":"); len(sl) > 1 {
 		var start, end int
 		var err error
 
@@ -132,6 +132,22 @@ func idxFilter(f string, v interface{}) []interface{} {
 		}
 
 		return slice[start:end]
+	}
+
+	// check if union access
+	if union := strings.Split(f, ","); len(union) > 1 {
+		output := make([]interface{}, 0)
+
+		for _, u := range union {
+			i, err := strconv.Atoi(u)
+			if err != nil || outOfRange(i, slice) {
+				return make([]interface{}, 0) // should we do this or just continue on?
+			}
+
+			output = append(output, slice[i])
+		}
+
+		return output
 	}
 
 	// some invalid filter

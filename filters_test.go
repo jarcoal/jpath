@@ -189,3 +189,19 @@ func TestSliceSelector(t *testing.T) {
 		}
 	}
 }
+
+func TestUnionSelector(t *testing.T) {
+	firstAndThirdCategories := document.Strings("$..book[0,1].category")
+
+	if len(firstAndThirdCategories) != 2 {
+		t.Fatalf("expected 2 categories, got %v", len(firstAndThirdCategories))
+	}
+
+	if firstAndThirdCategories[0] != "reference" {
+		t.Fatalf("expected first category to be 'reference', got %v", firstAndThirdCategories[0])
+	}
+
+	if firstAndThirdCategories[1] != "fiction" {
+		t.Fatalf("expected first category to be 'fiction', got %v", firstAndThirdCategories[1])
+	}
+}
