@@ -194,25 +194,61 @@ func idxFilter(f string, v interface{}) []interface{} {
 		return slice
 	}
 
-	// make sure the index is numeric
-	i, err := strconv.Atoi(f)
-	if err != nil {
-		return make([]interface{}, 0)
-	}
+	// check to see if this is a simple index access
+	if i, err := strconv.Atoi(f); err == nil {
+		// make sure it's not out of range
+		if outOfRange(i, slice) {
+			return make([]interface{}, 0)
+		}
 
-	// make sure it's not out of bounds
-	if float64(len(slice)) <= math.Abs(float64(i)) {
-		return make([]interface{}, 0)
-	}
+		start := i
 
-	// reverse access
-	if i < 0 {
-		start := len(slice) + i
+		// for reverse access, add the length of the slice
+		if i < 0 {
+			start += len(slice)
+		}
+
 		return slice[start : start+1]
 	}
 
-	// grab the entry from the slice
-	return slice[i : i+1]
+	// check if this a slice access
+	if sl := strings.Split(f, ":"); len(sl) > 0 {
+		var start, end int
+		var err error
+
+		// get the initial value for the start of the slice
+		if sl[0] == "" {
+			start = 0
+		} else if start, err = strconv.Atoi(sl[0]); err != nil || outOfRange(start, slice) {
+			return make([]interface{}, 0)
+		}
+
+		// if the start is a reverse access, put it into range
+		if start < 0 {
+			start += len(slice)
+		}
+
+		// get the initial value for the end of the slice
+		if sl[1] == "" {
+			end = len(slice)
+		} else if end, err = strconv.Atoi(sl[1]); err != nil || outOfRange(end, slice) {
+			return make([]interface{}, 0)
+		}
+
+		// if the end is a reverse access, put it into range
+		if end < 0 {
+			end += len(slice)
+		}
+
+		return slice[start:end]
+	}
+
+	// some invalid filter
+	return make([]interface{}, 0)
+}
+
+func outOfRange(idx int, sl []interface{}) bool {
+	return math.Abs(float64(idx)) >= float64(len(sl))
 }
 
 //
