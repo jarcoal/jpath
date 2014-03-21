@@ -92,6 +92,69 @@ func (j *Jpath) Query(sel string) []interface{} {
 	return objs
 }
 
+func (j *Jpath) Strings(sel string) []string {
+	ret := make([]string, 0)
+	for _, result := range j.Query(sel) {
+		if r, ok := result.(string); ok {
+			ret = append(ret, r)
+		}
+	}
+	return ret
+}
+
+func (j *Jpath) String(sel string) (string, bool) {
+	for _, result := range j.Query(sel) {
+		r, ok := result.(string)
+		if !ok {
+			return "", false
+		}
+		return r, true
+	}
+	return "", false
+}
+
+func (j *Jpath) Bools(sel string) []bool {
+	ret := make([]bool, 0)
+	for _, result := range j.Query(sel) {
+		if r, ok := result.(bool); ok {
+			ret = append(ret, r)
+		}
+	}
+	return ret
+}
+
+func (j *Jpath) Bool(sel string) (bool, bool) {
+	for _, result := range j.Query(sel) {
+		r, ok := result.(bool)
+		if !ok {
+			return false, false
+		}
+		return r, true
+	}
+	return false, false
+}
+
+func (j *Jpath) Floats(sel string) []float64 {
+	ret := make([]float64, 0)
+	for _, result := range j.Query(sel) {
+		if r, ok := result.(float64); ok {
+			ret = append(ret, r)
+		}
+	}
+	return ret
+}
+
+func (j *Jpath) Float(sel string) (float64, bool) {
+	for _, result := range j.Query(sel) {
+		r, ok := result.(float64)
+		if !ok {
+			return 0, false
+		}
+		return r, true
+	}
+	return 0, false
+}
+
 //
 func attributeFilter(f string, v interface{}) []interface{} {
 	ret := make([]interface{}, 0)

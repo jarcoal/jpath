@@ -50,16 +50,10 @@ func init() {
 	}
 }
 
-func TestChildSelector(t *testing.T) {
-	results := document.Query("$.store.bicycle.color")
-
-	if len(results) != 1 {
-		t.Fatalf("expected 1 result, got %v", len(results))
-	}
-
-	color, ok := results[0].(string)
+func TestAttributeSelector(t *testing.T) {
+	color, ok := document.String("$.store.bicycle.color")
 	if !ok {
-		t.Fatal("expected string, got %T", results[0])
+		t.Fatal("expected ok to be true")
 	}
 
 	if color != "red" {
@@ -70,47 +64,27 @@ func TestChildSelector(t *testing.T) {
 func TestDescendentSelector(t *testing.T) {
 	// all prices
 	{
-		results := document.Query("$..price")
+		results := document.Floats("$..price")
 
 		if len(results) != 5 {
 			t.Fatalf("expected 5 results, got %v", len(results))
-		}
-
-		for _, result := range results {
-			_, ok := result.(float64)
-			if !ok {
-				t.Fatal("expected float64, got %T", result)
-			}
 		}
 	}
 
 	// just book prices
 	{
-		results := document.Query("$..book..price")
+		results := document.Floats("$..book..price")
 
 		if len(results) != 4 {
 			t.Fatalf("expected 4 results, got %v", len(results))
 		}
-
-		for _, result := range results {
-			_, ok := result.(float64)
-			if !ok {
-				t.Fatal("expected float64, got %T", result)
-			}
-		}
 	}
 }
 
-func TestAttributeSelector(t *testing.T) {
-	results := document.Query("$.store.book[0].title")
-
-	if len(results) != 1 {
-		t.Fatalf("expected 1 result, got %v", len(results))
-	}
-
-	title, ok := results[0].(string)
+func TestIndexSelector(t *testing.T) {
+	title, ok := document.String("$.store.book[0].title")
 	if !ok {
-		t.Fatalf("expected string, got %T", title)
+		t.Fatal("expected ok to be true")
 	}
 
 	if title != "Sayings of the Century" {
