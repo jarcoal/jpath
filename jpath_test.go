@@ -82,13 +82,25 @@ func TestDescendentSelector(t *testing.T) {
 }
 
 func TestIndexSelector(t *testing.T) {
-	title, ok := document.String("$.store.book[0].title")
-	if !ok {
-		t.Fatal("expected ok to be true")
+	// simple index access
+	{
+		title, ok := document.String("$.store.book[0].title")
+		if !ok {
+			t.Fatal("expected ok to be true")
+		}
+
+		if title != "Sayings of the Century" {
+			t.Fatalf("expected value to be 'Sayings of the Century', got %s", title)
+		}
 	}
 
-	if title != "Sayings of the Century" {
-		t.Fatalf("expected value to be 'Sayings of the Century', got %s", title)
+	// wildcard all indexes
+	{
+		authors := document.Strings("$.store.book[*].author")
+
+		if len(authors) != 4 {
+			t.Fatalf("expected 4 authors, got %v", len(authors))
+		}
 	}
 }
 

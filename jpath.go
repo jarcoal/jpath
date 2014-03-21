@@ -188,6 +188,11 @@ func idxFilter(f string, v interface{}) []interface{} {
 		return make([]interface{}, 0)
 	}
 
+	// wildcard, so we return everything inside of the slice
+	if f == "*" {
+		return slice
+	}
+
 	// make sure the index is numeric
 	i, err := strconv.Atoi(f)
 	if err != nil {
