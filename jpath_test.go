@@ -110,3 +110,26 @@ func TestUnmarshal(t *testing.T) {
 		t.Fatalf("expected Prices to have 5 entries, got %v", len(st.Prices))
 	}
 }
+
+func TestInvalidUnmarshal(t *testing.T) {
+	{
+		// price isn't a string
+		st := new(struct {
+			Price string `jpath:"$..price"`
+		})
+
+		if err := Unmarshal(documentBytes, st); err == nil {
+			t.Fatal("expected an error to be returned")
+		}
+	}
+	{
+		// authors are strings, not floats
+		st := new(struct {
+			Authors []float64 `jpath:"$..author"`
+		})
+
+		if err := Unmarshal(documentBytes, st); err == nil {
+			t.Fatal("expected an error to be returned")
+		}
+	}
+}
