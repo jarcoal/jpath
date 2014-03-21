@@ -94,6 +94,32 @@ func TestIndexSelector(t *testing.T) {
 		}
 	}
 
+	// invalid index access
+	{
+		if _, ok := document.String("$.store.book[10].title"); ok {
+			t.Fatal("expected ok to be false")
+		}
+	}
+
+	// reverse access
+	{
+		lastAuthor, ok := document.String("$.store.book[-2].author")
+		if !ok {
+			t.Fatal("expected ok to be true")
+		}
+
+		if lastAuthor != "Herman Melville" {
+			t.Fatalf("expected lastAuthor to be 'Herman Melville', got %s", lastAuthor)
+		}
+	}
+
+	// invalid reverse access
+	{
+		if _, ok := document.String("$.store.book[-10].author"); ok {
+			t.Fatal("expected ok to be false")
+		}
+	}
+
 	// wildcard all indexes
 	{
 		authors := document.Strings("$.store.book[*].author")

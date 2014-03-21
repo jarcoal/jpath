@@ -3,6 +3,7 @@ package jpath
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -200,8 +201,14 @@ func idxFilter(f string, v interface{}) []interface{} {
 	}
 
 	// make sure it's not out of bounds
-	if len(slice) <= i {
+	if float64(len(slice)) <= math.Abs(float64(i)) {
 		return make([]interface{}, 0)
+	}
+
+	// reverse access
+	if i < 0 {
+		start := len(slice) + i
+		return slice[start : start+1]
 	}
 
 	// grab the entry from the slice
